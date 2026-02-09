@@ -6,7 +6,10 @@ on:
     - cron: '0 12 * * 3'
 jobs:
   Build-Script:
-    runs-on: macos-latest
+    # macos-latest (macOS 15) has Xcode 16.4, whose SDK lacks modulemap
+    # files required by recent Chromium buildtools. Use macos-26 until
+    # macos-latest is updated.
+    runs-on: macos-26
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
