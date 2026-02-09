@@ -22,6 +22,17 @@ class BuildMetadata:
     commit: str
     branch: str
 
+def getStableMilestone():
+    """Find the current stable milestone from the Chromium Dashboard."""
+    try:
+        milestones = requests.get("https://chromiumdash.appspot.com/fetch_milestones").json()
+        for m in milestones:
+            if m.get("schedule_phase") == "stable":
+                return int(m["milestone"])
+    except Exception as e:
+        print(f"⚠️ Failed to fetch stable milestone: {e}")
+    return None
+
 def getNextRelease():
     # Get current version
     releases = requests.get("https://api.github.com/repos/stasel/WebRTC/releases", headers={'Authorization': f"token {GITHUB_TOKEN}"}).json()
@@ -30,8 +41,13 @@ def getNextRelease():
     latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
-    # Get next version
+    # Get next version, skipping ahead to the current stable milestone if needed
     nextReleaseVersion = latestReleaseVersion + 1
+    stableMilestone = getStableMilestone()
+    if stableMilestone and stableMilestone > nextReleaseVersion:
+        print(f"Current stable milestone is M{stableMilestone}, skipping ahead from M{nextReleaseVersion}")
+        nextReleaseVersion = stableMilestone
+
     milestones = requests.get(f"https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone={nextReleaseVersion}").json()
     nextReleaseDate = datetime.fromisoformat(milestones["mstones"][0]["stable_date"])
     print(f"Next release:   version {nextReleaseVersion}, date: {nextReleaseDate}")
