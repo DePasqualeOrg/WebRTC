@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import telegram
 
 GITHUB_TOKEN=os.environ.get("GITHUB_TOKEN")
+GITHUB_REPO=os.environ.get("GITHUB_REPOSITORY", "stasel/WebRTC")
 TELEGRAM_TOKEN=os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID=os.environ.get("TELEGRAM_CHAT_ID")
 
@@ -22,6 +23,17 @@ class BuildMetadata:
     commit: str
     branch: str
 
+def getStableMilestone():
+    """Find the current stable milestone from the Chromium Dashboard."""
+    try:
+        milestones = requests.get("https://chromiumdash.appspot.com/fetch_milestones").json()
+        for m in milestones:
+            if m.get("schedule_phase") == "stable":
+                return int(m["milestone"])
+    except Exception as e:
+        print(f"⚠️ Failed to fetch stable milestone: {e}")
+    return None
+
 def getNextRelease():
     # Get current version
     releases = requests.get("https://api.github.com/repos/stasel/WebRTC/releases", headers={'Authorization': f"token {GITHUB_TOKEN}"}).json()
@@ -30,8 +42,13 @@ def getNextRelease():
     latestReleaseDate = datetime.fromisoformat(releases[0]["published_at"].replace("Z", ""))
     print(f"Latest release: version {latestReleaseVersion}, date: {latestReleaseDate}")
 
-    # Get next version
+    # Get next version, skipping ahead to the current stable milestone if needed
     nextReleaseVersion = latestReleaseVersion + 1
+    stableMilestone = getStableMilestone()
+    if stableMilestone and stableMilestone > nextReleaseVersion:
+        print(f"Current stable milestone is M{stableMilestone}, skipping ahead from M{nextReleaseVersion}")
+        nextReleaseVersion = stableMilestone
+
     milestones = requests.get(f"https://chromiumdash.appspot.com/fetch_milestone_schedule?mstone={nextReleaseVersion}").json()
     nextReleaseDate = datetime.fromisoformat(milestones["mstones"][0]["stable_date"])
     print(f"Next release:   version {nextReleaseVersion}, date: {nextReleaseDate}")
@@ -72,7 +89,7 @@ def createReleaseDraft(release, buildMetadata):
         'body': body
     }
     headers = {'accept': 'application/vnd.github.v3+json', 'Authorization': f'token {GITHUB_TOKEN}'}
-    return requests.post("https://api.github.com/repos/stasel/WebRTC/releases", json = fields, headers = headers).json()
+    return requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/releases", json = fields, headers = headers).json()
 
 def uploadReleaseAsset(url, assetLocalPath, assetName):
     url = url.replace(u'{?name,label}','')
@@ -94,7 +111,7 @@ def createPullRequest(release, head):
         'base': 'latest',
         'body': 'Created by an automated sotfware 🤖'
     }
-    response = requests.post("https://api.github.com/repos/stasel/WebRTC/pulls", json = body, headers = headers)
+    response = requests.post(f"https://api.github.com/repos/{GITHUB_REPO}/pulls", json = body, headers = headers)
     success = response.status_code == requests.codes.created
     if not success:
         print(response)
@@ -162,7 +179,7 @@ if __name__ == "__main__":
     cartageFile = open("WebRTC.json", 'r')
 
     cartageJSON = json.loads(cartageFile.read())
-    cartageJSON[f'{nextRelease.version}.0.0'] = f'https://github.com/stasel/WebRTC/releases/download/{nextRelease.version}.0.0/WebRTC-M{nextRelease.version}.xcframework.zip'
+    cartageJSON[f'{nextRelease.version}.0.0'] = f'https://github.com/{GITHUB_REPO}/releases/download/{nextRelease.version}.0.0/WebRTC-M{nextRelease.version}.xcframework.zip'
     cartageFile.close()
     cartageJSONWrite = open("WebRTC.json", 'w')
     cartageJSONWrite.write(json.dumps(cartageJSON, indent=4, sort_keys=True))
@@ -186,7 +203,7 @@ if __name__ == "__main__":
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         print("➡️ Sending Telegram notification...")
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        message = f"New WebRTC Release M{nextRelease.version} is now available.\nCheck the PR here: https://github.com/stasel/WebRTC/pulls"
+        message = f"New WebRTC Release M{nextRelease.version} is now available.\nCheck the PR here: https://github.com/{GITHUB_REPO}/pulls"
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
     print(f"✅ Done")
