@@ -91,6 +91,14 @@ cd ..
 gclient sync --with_branch_heads --with_tags
 cd src
 
+# Apply patches for known issues in release branches.
+# Patches that don't apply (e.g. already included) are skipped.
+for patch in ../scripts/patches/*.patch; do
+    if [ -f "$patch" ] && git apply --check "$patch" 2>/dev/null; then
+        git apply "$patch" && echo "Applied $patch"
+    fi
+done
+
 # Step 3 - Compile and build all frameworks
 rm -rf $OUTPUT_DIR  
 
