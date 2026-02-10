@@ -1,0 +1,77 @@
+From 1d832acb82092850131c2d2395108d6779a40782 Mon Sep 17 00:00:00 2001
+From: Shigemasa Watanabe <shigemasa7watanabe@gmail.com>
+Date: Wed, 12 Nov 2025 10:24:12 +0900
+Subject: [PATCH] Restore the copy_framework_header.py script.
+
+Fixed an issue where the execution of copy_framework_header.py was
+removed due to a commit at
+https://webrtc-review.googlesource.com/c/src/+/406140, causing import
+path resolution to fail.
+
+Bug: webrtc:450130875
+Change-Id: Ifb8ab4540137bfc643e37e9f466ac4b1818dd902
+Reviewed-on: https://webrtc-review.googlesource.com/c/src/+/424441
+Reviewed-by: Jeremy Leconte <jleconte@google.com>
+Reviewed-by: Christoffer Dewerin <jansson@webrtc.org>
+Commit-Queue: Jeremy Leconte <jleconte@google.com>
+Cr-Commit-Position: refs/heads/main@{#46276}
+---
+
+diff --git a/webrtc.gni b/webrtc.gni
+index b18c04d..5c69818 100644
+--- a/webrtc.gni
++++ b/webrtc.gni
+@@ -1069,6 +1069,26 @@
+              ] + rebase_path(sources, root_build_dir)
+     }
+
++    action_foreach("create_bracket_include_headers_$target_name") {
++      script = "//tools_webrtc/apple/copy_framework_header.py"
++      if (is_mac) {
++        sources = invoker.sources
++      } else {
++        sources = invoker.public_headers
++      }
++      output_name = invoker.output_name
++      outputs = [
++        "$target_gen_dir/$output_name.framework/Headers/{{source_file_part}}",
++      ]
++      args = [
++        "--input",
++        "{{source}}",
++        "--output",
++        rebase_path(target_gen_dir, root_build_dir) +
++            "/$output_name.framework/Headers/{{source_file_part}}",
++      ]
++    }
++
+     action("create_privacy_manifest_$this_target_name") {
+       script = "//tools_webrtc/apple/generate_privacy_manifest.py"
+       args = [
+@@ -1112,6 +1132,7 @@
+         deps += [
+           ":copy_modulemap_$this_target_name",
+           ":copy_umbrella_header_$this_target_name",
++          ":create_bracket_include_headers_$this_target_name",
+           ":create_privacy_manifest_$this_target_name",
+           ":modulemap_$this_target_name",
+           ":privacy_manifest_bundle_data_$this_target_name",
+@@ -1160,15 +1181,13 @@
+           configs += invoker.configs
+         }
+
+-        if (defined(invoker.public_headers)) {
+-          public_headers = invoker.public_headers
+-        } else {
+-          public_headers = []
+-        }
++        public_headers = get_target_outputs(
++                ":create_bracket_include_headers_$this_target_name")
+         public_headers +=
+             get_target_outputs(":umbrella_header_$this_target_name")
+
+         deps += [
++          ":create_bracket_include_headers_$this_target_name",
+           ":create_privacy_manifest_$this_target_name",
+           ":umbrella_header_$this_target_name",
+         ]
