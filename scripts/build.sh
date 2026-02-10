@@ -36,6 +36,15 @@ build_macOS() {
     gn gen "${gen_dir}" --args="${gen_args}"
     gn args --list ${gen_dir} > ${gen_dir}/gn-args.txt
     ninja -C "${gen_dir}" mac_framework_objc || exit 1
+
+    # The upstream header copy fix (webrtc:450130875) generates headers into
+    # gen/sdk/WebRTC.framework/Headers/ but the macOS versioned framework layout
+    # doesn't pick them up. Copy them into the output framework.
+    local gen_headers="${gen_dir}/gen/sdk/WebRTC.framework/Headers"
+    local out_headers="${gen_dir}/WebRTC.framework/Versions/A/Headers"
+    if [ -d "$gen_headers" ]; then
+        cp "$gen_headers"/*.h "$out_headers/" 2>/dev/null
+    fi
 }
 
 # Catalyst builds are not working properly yet. 
