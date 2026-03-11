@@ -45,6 +45,7 @@ The WebRTC macOS framework is missing headers due to an incomplete upstream fix 
 7. **Create a patch release branch and update the package first** (e.g. `release-M<MILESTONE>-patch`):
    - Update `Package.swift` URL and checksum to point to `<VERSION>.1`
    - Commit and push that branch
+   - If the automated release workflow already opened `release-M<MILESTONE>` for `<VERSION>.0.0`, do not merge that PR after you decide to ship `<VERSION>.1` instead. Keep the `<VERSION>.0.0` tag on the workflow commit, then close the PR and delete the branch after the patch release is published.
 
 8. **Rename the patched zip to the canonical asset name:**
    ```sh
