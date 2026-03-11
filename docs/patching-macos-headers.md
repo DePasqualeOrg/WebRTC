@@ -46,12 +46,21 @@ The WebRTC macOS framework is missing headers due to an incomplete upstream fix 
    - Update `Package.swift` URL and checksum to point to `<VERSION>.1`
    - Commit and push that branch
 
-8. **Create the patch release** (e.g. `X.0.1`) targeting that branch:
-   - `gh release create <VERSION>.1 /tmp/WebRTC-patched.xcframework.zip#WebRTC-M<MILESTONE>.xcframework.zip --repo DePasqualeOrg/WebRTC --target <BRANCH> --title "M<MILESTONE>" --notes "Rebuild of M<MILESTONE> with macOS framework headers fix."`
+8. **Rename the patched zip to the canonical asset name:**
+   ```sh
+   cp /tmp/WebRTC-patched.xcframework.zip /tmp/WebRTC-M<MILESTONE>.xcframework.zip
+   ```
+
+9. **Create the patch release** (e.g. `X.0.1`) targeting that branch:
+   - `gh release create <VERSION>.1 /tmp/WebRTC-M<MILESTONE>.xcframework.zip --repo DePasqualeOrg/WebRTC --target <BRANCH> --title "M<MILESTONE>" --notes "Rebuild of M<MILESTONE> with macOS framework headers fix."`
    - Merge the branch back into `latest`
 
    If you create the GitHub release before the `Package.swift` commit exists, GitHub will tag the current `latest` tip instead of the updated patch commit.
    If that already happened, move the tag to the correct commit with `git tag -f <VERSION>.1 <COMMIT>` and `git push origin refs/tags/<VERSION>.1 --force`.
+   Do not rely on `#label` to rename the uploaded asset. SwiftPM downloads the asset by its real filename, which must match the URL in `Package.swift`.
+   Do not pass `--prerelease` unless you intentionally want a prerelease.
+   If you accidentally uploaded the wrong asset filename, fix it with `gh release upload <VERSION>.1 /tmp/WebRTC-M<MILESTONE>.xcframework.zip --repo DePasqualeOrg/WebRTC`.
+   If you accidentally made the release a prerelease, fix it with `gh release edit <VERSION>.1 --prerelease=false --latest --repo DePasqualeOrg/WebRTC`.
 
 ## Verifying
 
