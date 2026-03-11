@@ -42,10 +42,13 @@ The WebRTC macOS framework is missing headers due to an incomplete upstream fix 
    shasum -a 256 /tmp/WebRTC-patched.xcframework.zip
    ```
 
-7. **Create a patch release branch and update the package first** (e.g. `release-M<MILESTONE>-patch`):
+7. **Use the existing release PR branch if it already exists; otherwise create a patch branch**:
+   - If the automated release workflow already opened `release-M<MILESTONE>` for `<VERSION>.0.0`, continue working on that same branch and PR.
+   - Otherwise create a patch branch (for example `release-M<MILESTONE>-patch`).
    - Update `Package.swift` URL and checksum to point to `<VERSION>.1`
-   - Commit and push that branch
-   - If the automated release workflow already opened `release-M<MILESTONE>` for `<VERSION>.0.0`, do not merge that PR after you decide to ship `<VERSION>.1` instead. Keep the `<VERSION>.0.0` tag on the workflow commit, then close the PR and delete the branch after the patch release is published.
+   - Commit and push the branch you are using
+   - Do not merge the PR until the patched release has been published
+   - Keep the `<VERSION>.0.0` tag on the original workflow commit. Adding later patch commits to the same branch does not move that tag.
 
 8. **Rename the patched zip to the canonical asset name:**
    ```sh
