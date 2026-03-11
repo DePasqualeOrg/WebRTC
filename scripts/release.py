@@ -82,7 +82,7 @@ def getBuildMetadata(outputDir):
         jsonData = json.loads(f.read())
         return BuildMetadata(filename = jsonData['file'], checksum = jsonData['checksum'], commit = jsonData['commit'], branch = jsonData['branch'])
 
-def createReleaseDraft(release, buildMetadata):
+def createReleaseDraft(release, buildMetadata, targetCommitish):
     body = f"Release notes: https://webrtc.googlesource.com/src.git/+log/refs/{buildMetadata.branch}/\n"
     body += f"WebRTC Branch: [{buildMetadata.branch}](https://chromium.googlesource.com/external/webrtc/+log/{buildMetadata.branch})\n"
     body += f"WebRTC Commit: `{buildMetadata.commit}`\n"
@@ -91,6 +91,7 @@ def createReleaseDraft(release, buildMetadata):
     fields = { 
         'name': f'M{release.version}',
         'tag_name': f'{release.version}.0.0',
+        'target_commitish': targetCommitish,
         'draft': True,
         'body': body
     }
@@ -154,23 +155,6 @@ if __name__ == "__main__":
     buildMetadata = getBuildMetadata(outputDir)
     print(buildMetadata)
 
-    # Create new release draft
-    print("➡️ Creating new release draft...")
-    githubReleaseDraft = createReleaseDraft(nextRelease ,buildMetadata)
-
-    # Upload asset to github
-    print("➡️ Uploading asset to github...")
-    assetName = f"WebRTC-M{nextRelease.version}.xcframework.zip"
-    assetPath = os.path.join(outputDir, buildMetadata.filename)
-    uploadURL = githubReleaseDraft['upload_url']
-    uploadResult = uploadReleaseAsset(uploadURL, assetPath, assetName)
-
-    if not uploadResult:
-        print("❌ Failed uploading asset to github")
-        os._exit(os.EX_SOFTWARE)
-
-    print(f"✅ Successfully created new draft release in github: {githubReleaseDraft['url']}")
-
     # Create new branch with code changes
     print("➡️ Creating local branch...")
     releaseBranch = f'release-M{nextRelease.version}'
@@ -178,10 +162,10 @@ if __name__ == "__main__":
 
     # Change code
     print("➡️ Applying code changes...")
-    os.system(f"sed -i '' -E 's/[0-9]+\.[0-9]+\.[0-9]+\/WebRTC-M[0-9]+/{nextRelease.version}.0.0\/WebRTC-M{nextRelease.version}/g' Package.swift WebRTC-lib.podspec")
-    os.system(f"sed -i '' -E 's/checksum: \"[0-9a-f]+\"/checksum: \"{buildMetadata.checksum}\"/g' Package.swift WebRTC-lib.podspec ")
-    os.system(f"sed -i '' -E 's/.upToNextMajor\\(\"[0-9]+\.[0-9]+\.[0-9]+/.upToNextMajor\\(\"{nextRelease.version}.0.0/g' README.md")
-    os.system(f"sed -i '' -E 's/spec.version      = \"[0-9]+\.[0-9]+\.[0-9]+\"/spec.version      = \"{nextRelease.version}.0.0\"/g' WebRTC-lib.podspec")
+    os.system(rf"sed -i '' -E 's/[0-9]+\.[0-9]+\.[0-9]+\/WebRTC-M[0-9]+/{nextRelease.version}.0.0\/WebRTC-M{nextRelease.version}/g' Package.swift WebRTC-lib.podspec")
+    os.system(rf"sed -i '' -E 's/checksum: \"[0-9a-f]+\"/checksum: \"{buildMetadata.checksum}\"/g' Package.swift WebRTC-lib.podspec ")
+    os.system(rf"sed -i '' -E 's/.upToNextMajor\(\"[0-9]+\.[0-9]+\.[0-9]+/.upToNextMajor(\"{nextRelease.version}.0.0/g' README.md")
+    os.system(rf"sed -i '' -E 's/spec.version      = \"[0-9]+\.[0-9]+\.[0-9]+\"/spec.version      = \"{nextRelease.version}.0.0\"/g' WebRTC-lib.podspec")
     cartageFile = open("WebRTC.json", 'r')
 
     cartageJSON = json.loads(cartageFile.read())
@@ -197,6 +181,24 @@ if __name__ == "__main__":
     os.system(f'git add Package.swift WebRTC-lib.podspec README.md WebRTC.json')
     os.system(f'git commit -m "Updated files for release M{nextRelease.version}"')
     os.system(f'git push origin {releaseBranch}')
+
+    # Create new release draft after the release branch exists, so the tag points
+    # at the updated package metadata instead of the stale latest branch tip.
+    print("➡️ Creating new release draft...")
+    githubReleaseDraft = createReleaseDraft(nextRelease, buildMetadata, releaseBranch)
+
+    # Upload asset to github
+    print("➡️ Uploading asset to github...")
+    assetName = f"WebRTC-M{nextRelease.version}.xcframework.zip"
+    assetPath = os.path.join(outputDir, buildMetadata.filename)
+    uploadURL = githubReleaseDraft['upload_url']
+    uploadResult = uploadReleaseAsset(uploadURL, assetPath, assetName)
+
+    if not uploadResult:
+        print("❌ Failed uploading asset to github")
+        os._exit(os.EX_SOFTWARE)
+
+    print(f"✅ Successfully created new draft release in github: {githubReleaseDraft['url']}")
 
     # Create PR
     print("➡️ Creating pull request...")

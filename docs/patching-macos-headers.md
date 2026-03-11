@@ -42,10 +42,16 @@ The WebRTC macOS framework is missing headers due to an incomplete upstream fix 
    shasum -a 256 /tmp/WebRTC-patched.xcframework.zip
    ```
 
-7. **Create a patch release** (e.g. `X.0.1`):
-   - `gh release create <VERSION>.1 /tmp/WebRTC-patched.xcframework.zip#WebRTC-M<MILESTONE>.xcframework.zip --repo DePasqualeOrg/WebRTC --title "M<MILESTONE>" --notes "Rebuild of M<MILESTONE> with macOS framework headers fix."`
-   - Update `Package.swift` URL and checksum to point to the patch release
-   - Tag the commit as `<VERSION>.1`
+7. **Create a patch release branch and update the package first** (e.g. `release-M<MILESTONE>-patch`):
+   - Update `Package.swift` URL and checksum to point to `<VERSION>.1`
+   - Commit and push that branch
+
+8. **Create the patch release** (e.g. `X.0.1`) targeting that branch:
+   - `gh release create <VERSION>.1 /tmp/WebRTC-patched.xcframework.zip#WebRTC-M<MILESTONE>.xcframework.zip --repo DePasqualeOrg/WebRTC --target <BRANCH> --title "M<MILESTONE>" --notes "Rebuild of M<MILESTONE> with macOS framework headers fix."`
+   - Merge the branch back into `latest`
+
+   If you create the GitHub release before the `Package.swift` commit exists, GitHub will tag the current `latest` tip instead of the updated patch commit.
+   If that already happened, move the tag to the correct commit with `git tag -f <VERSION>.1 <COMMIT>` and `git push origin refs/tags/<VERSION>.1 --force`.
 
 ## Verifying
 
