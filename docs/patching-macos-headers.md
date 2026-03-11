@@ -46,6 +46,9 @@ The WebRTC macOS framework is missing headers due to an incomplete upstream fix 
    - If the automated release workflow already opened `release-M<MILESTONE>` for `<VERSION>.0.0`, continue working on that same branch and PR.
    - Otherwise create a patch branch (for example `release-M<MILESTONE>-patch`).
    - Update `Package.swift` URL and checksum to point to `<VERSION>.1`
+   - Update the `README.md` example version to `<VERSION>.1`
+   - Update `WebRTC-lib.podspec` to `<VERSION>.1`
+   - Add or update the `WebRTC.json` entry for `<VERSION>.1`
    - Commit and push the branch you are using
    - Do not merge the PR until the patched release has been published
    - Keep the `<VERSION>.0.0` tag on the original workflow commit. Adding later patch commits to the same branch does not move that tag.

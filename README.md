@@ -1,7 +1,7 @@
 # WebRTC Binaries for iOS and macOS
-[![Latest version](https://img.shields.io/github/v/release/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
-[![Release Date](https://img.shields.io/github/release-date/stasel/webrtc)](https://github.com/stasel/WebRTC/releases)
-[![Total Downloads](https://img.shields.io/github/downloads/stasel/webrtc/total)](https://github.com/stasel/WebRTC/releases)
+[![Latest version](https://img.shields.io/github/v/release/DePasqualeOrg/WebRTC)](https://github.com/DePasqualeOrg/WebRTC/releases)
+[![Release Date](https://img.shields.io/github/release-date/DePasqualeOrg/WebRTC)](https://github.com/DePasqualeOrg/WebRTC/releases)
+[![Total Downloads](https://img.shields.io/github/downloads/DePasqualeOrg/WebRTC/total)](https://github.com/DePasqualeOrg/WebRTC/releases)
 [![Cocoapods](https://img.shields.io/cocoapods/v/WebRTC-lib)](https://cocoapods.org/pods/WebRTC-lib)
 
 
@@ -42,7 +42,7 @@ Xcode has a built-in support for Swift package manager. You can easily add the p
 Or, you can add the following dependency to your `Package.swift` file:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/stasel/WebRTC.git", .upToNextMajor("145.0.0"))
+    .package(url: "https://github.com/DePasqualeOrg/WebRTC.git", .upToNextMajor("146.0.1"))
 ]
 ```
 
@@ -50,7 +50,7 @@ Use the `latest` branch to get the most up to date binary:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/stasel/WebRTC.git", branch: "latest")
+    .package(url: "https://github.com/DePasqualeOrg/WebRTC.git", branch: "latest")
 ]
 ```
 
@@ -71,7 +71,7 @@ Read more about Cocoapods: https://cocoapods.org
 
 Add the following dependency to the `Cartfile` in your project:
 ```
-binary "https://raw.githubusercontent.com/stasel/WebRTC/latest/WebRTC.json"
+binary "https://raw.githubusercontent.com/DePasqualeOrg/WebRTC/latest/WebRTC.json"
 ```
 Then update the dependencies using the following command:
 ```
@@ -82,7 +82,7 @@ And finally, add the xcframework located in `./Carthage/Build/WebRTC.xcframework
 Read more about Carthage: https://github.com/Carthage/Carthage
 
 ### Manual
-1. Download the framework from the [releases](https://github.com/stasel/WebRTC/releases) section.
+1. Download the framework from the [releases](https://github.com/DePasqualeOrg/WebRTC/releases) section.
 2. Unzip the file.
 3. Add the xcframework to your target(s) embedded frameworks.
 
